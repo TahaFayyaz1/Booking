@@ -194,12 +194,12 @@ def check_once(fbs, cfg):
 
 
 # ---------------------------------------------------------------- telegram
-def tg(method, timeout=20, **data):
+def tg(method, http_timeout=20, **data):
     tok = os.environ.get("TG_BOT_TOKEN")
     if not tok:
         return {}
     try:
-        return requests.post(f"https://api.telegram.org/bot{tok}/{method}", data=data, timeout=timeout).json()
+        return requests.post(f"https://api.telegram.org/bot{tok}/{method}", data=data, timeout=http_timeout).json()
     except Exception as e:
         log("telegram error:", repr(e))
         return {}
@@ -314,13 +314,13 @@ class Watcher:
 
     def poll_commands(self):
         chat = str(os.environ["TG_CHAT_ID"])
-        upd = tg("getUpdates", timeout=10).get("result", [])     # skip old messages
+        upd = tg("getUpdates", http_timeout=15).get("result", [])     # skip old messages
         offset = upd[-1]["update_id"] + 1 if upd else None
         while True:
             data = {"timeout": 50}
             if offset:
                 data["offset"] = offset
-            res = tg("getUpdates", timeout=70, **data)
+            res = tg("getUpdates", http_timeout=70, **data)
             if res.get("error_code") == 409:
                 log("Another copy of the watcher is running with this bot. Stop it.")
                 time.sleep(30)
